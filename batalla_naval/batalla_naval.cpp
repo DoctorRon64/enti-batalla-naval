@@ -212,20 +212,16 @@ int main() {
                 hiddenBoardP2[r][c] = HIT_MARK;
                 std::cout << "Hit!\n";
                 grantExtraTurn = true;
-
-                std::cout << "Press Enter to continue...";
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cin.get();
             }
             else {
                 viewBoardP2[r][c] = MISS_MARK;
                 hiddenBoardP2[r][c] = MISS_MARK;
                 std::cout << "Miss!\n";
-
-                std::cout << "Press Enter to continue...";
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cin.get();
             }
+
+            std::cout << "Press Enter to continue...";
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cin.get();
         }
         else {
             if(viewBoardP1[r][c] != WATER_CELL) {
@@ -239,20 +235,16 @@ int main() {
                 hiddenBoardP1[r][c] = HIT_MARK;
                 std::cout << "Hit!\n";
                 grantExtraTurn = true;
-
-                std::cout << "Press Enter to continue...";
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cin.get();
             }
             else {
                 viewBoardP1[r][c] = MISS_MARK;
                 hiddenBoardP1[r][c] = MISS_MARK;
                 std::cout << "Miss!\n";
-
-                std::cout << "Press Enter to continue...";
-                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
-                std::cin.get();
             }
+
+            std::cout << "Press Enter to continue...";
+            std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+            std::cin.get();
         }
 
         // -------- Win check --------
