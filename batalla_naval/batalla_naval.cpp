@@ -1,7 +1,6 @@
 ﻿#include <cstdlib>
 #include <ctime>
 #include <iostream>
-#include <limits>
 #include <string>
 
 int main() {
@@ -18,12 +17,14 @@ int main() {
     const short LAST_SHIP = 3;
     const short MAX_PLACEMENT_ATTEMPTS = BOARD_SIZE * BOARD_SIZE;
 
+    const short P1_INDEX = 1;
+    const short P2_INDEX = 2;
+
     char hiddenBoardP1[BOARD_SIZE][BOARD_SIZE];
     char hiddenBoardP2[BOARD_SIZE][BOARD_SIZE];
     char viewBoardP1[BOARD_SIZE][BOARD_SIZE];
     char viewBoardP2[BOARD_SIZE][BOARD_SIZE];
 
-    bool gameOver = false;
     bool grantExtraTurn = false;
     bool stayOnTurn = false;
     short currentPlayer = 0;
@@ -40,12 +41,10 @@ int main() {
         }
     }
 
-    // -------- Place ships for both players --------
-    for(short player = 1; player <= 2; ++player) {
-        char (*board)[BOARD_SIZE] =
-            (player == 1) ? hiddenBoardP1 : hiddenBoardP2;
-
+    // -------- Place ships --------
+    for(short player = P1_INDEX; player <= P2_INDEX; ++player) {
         for(short shipSize = FIRST_SHIP; shipSize >= LAST_SHIP; --shipSize) {
+
             bool placed = false;
             short attempts = 0;
             char shipChar = '0' + shipSize;
@@ -66,140 +65,199 @@ int main() {
                 }
 
                 bool canPlace = true;
+
                 for(short i = 0; i < shipSize; ++i) {
-                    short r = row + (orientation ? i : 0);
-                    short c = col + (orientation ? 0 : i);
-                    if(board[r][c] != WATER_CELL) {
+                    short r = row + (orientation == 1 ? i : 0);
+                    short c = col + (orientation == 0 ? i : 0);
+
+                    if(player == 1 && hiddenBoardP1[r][c] != WATER_CELL) {
                         canPlace = false;
-                        break;
+                    }
+                    if(player == 2 && hiddenBoardP2[r][c] != WATER_CELL) {
+                        canPlace = false;
                     }
                 }
 
                 if(canPlace) {
                     for(short i = 0; i < shipSize; ++i) {
-                        short r = row + (orientation ? i : 0);
-                        short c = col + (orientation ? 0 : i);
-                        board[r][c] = shipChar;
+                        short r = row + (orientation == 1 ? i : 0);
+                        short c = col + (orientation == 0 ? i : 0);
+
+                        if(player == 1)
+                            hiddenBoardP1[r][c] = shipChar;
+                        else
+                            hiddenBoardP2[r][c] = shipChar;
                     }
                     placed = true;
                 }
             }
 
             if(!placed) {
-                std::cout << "ERROR: Could not place ship size "
-                    << shipSize << "\n";
+                std::cout << "ERROR: Could not place ship size " << shipSize << "\n";
                 return 1;
             }
         }
+
+        // -------- Show each player their own ships --------
+        system("cls");
+        std::cout << "Player " << player << ", here are your ships:\n\n";
+
+        for(short i = 1; i <= BOARD_SIZE; ++i) {
+            std::cout << i << ' ';
+        }
+        std::cout << '\n';
+
+        for(short i = 0; i < BOARD_SIZE; ++i) {
+            for(short j = 0; j < BOARD_SIZE; ++j) {
+                if(player == 1) {
+                    std::cout << hiddenBoardP1[i][j] << ' ';
+                }
+                else {
+                    std::cout << hiddenBoardP2[i][j] << ' ';
+                }
+            }
+            std::cout << i + 1 << '\n';
+        }
+
+        std::cout << "\nPress Enter when ready...";
+        std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     }
 
-    std::string pause;
+    std::cout << std::endl;
     std::cout << "Press Enter to start the game.";
-    std::getline(std::cin, pause);
+    std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
 
     // -------- Game loop --------
-    while(!gameOver) {
+    while(true) {
         system("cls");
 
-        if(!grantExtraTurn && !stayOnTurn) currentPlayer = (currentPlayer % 2) + 1;
+        if(!grantExtraTurn && !stayOnTurn) {
+            currentPlayer = (currentPlayer % 2) + 1;
+        }
 
-        stayOnTurn = false;
         grantExtraTurn = false;
+        stayOnTurn = false;
 
         // -------- Print view boards --------
-        for(short p = 1; p <= 2; ++p) {
+        for(short p = P1_INDEX; p <= P2_INDEX; ++p) {
             std::cout << "Player " << p << ":\n";
-            char (*view)[BOARD_SIZE] =
-                (p == 1) ? viewBoardP1 : viewBoardP2;
 
-            for(short i = 1; i <= BOARD_SIZE; ++i)
+            for(short i = 1; i <= BOARD_SIZE; ++i) {
                 std::cout << i << ' ';
+            }
             std::cout << '\n';
 
             for(short i = 0; i < BOARD_SIZE; ++i) {
-                for(short j = 0; j < BOARD_SIZE; ++j)
-                    std::cout << view[i][j] << ' ';
+                for(short j = 0; j < BOARD_SIZE; ++j) {
+                    if(p == 1) {
+                        std::cout << viewBoardP1[i][j] << ' ';
+                    }
+                    else {
+                        std::cout << viewBoardP2[i][j] << ' ';
+                    }
+                }
                 std::cout << i + 1 << '\n';
             }
             std::cout << "----------------------\n\n";
         }
 
         // -------- Input --------
-        short selectedRow = 0;
-        short selectedCol = 0;
+        short row = 0;
+        short col = 0;
         bool validInput = false;
 
         while(!validInput) {
-            short col, row;
+
             std::cout << "Player " << currentPlayer << ", enter column [1-10]: ";
-            if(!(std::cin >> col)) {
+            std::cin >> col;
+
+            if(std::cin.fail()) {
                 std::cin.clear();
                 std::cin.ignore(1000, '\n');
+                std::cout << "Invalid input. Numbers only.\n";
                 continue;
             }
 
             std::cout << "Enter row [1-10]: ";
-            if(!(std::cin >> row)) {
+            std::cin >> row;
+
+            if(std::cin.fail()) {
                 std::cin.clear();
                 std::cin.ignore(1000, '\n');
+                std::cout << "Invalid input. Numbers only.\n";
                 continue;
             }
 
-            if(col < 1 || col > 10 || row < 1 || row > 10) {
-                std::cout << "Out of bounds.\n";
+            if(col <= 0 || col > BOARD_SIZE || row <= 0 || row > BOARD_SIZE) {
+                std::cout << "Out of bounds. Use 1 to 10.\n";
                 continue;
             }
 
-            selectedCol = col - 1;
-            selectedRow = row - 1;
             validInput = true;
         }
 
+        short r = row - 1;
+        short c = col - 1;
+
         // -------- Resolve shot --------
-        if(currentPlayer == 1) {
-
-            if(viewBoardP2[selectedRow][selectedCol] != WATER_CELL) {
+        if(currentPlayer == P1_INDEX) {
+            if(viewBoardP2[r][c] != WATER_CELL) {
                 std::cout << "Already shot there!\n";
                 stayOnTurn = true;
                 continue;
             }
 
-            if(hiddenBoardP2[selectedRow][selectedCol] != WATER_CELL) {
-                viewBoardP2[selectedRow][selectedCol] = HIT_MARK;
-                hiddenBoardP2[selectedRow][selectedCol] = HIT_MARK;
+            if(hiddenBoardP2[r][c] != WATER_CELL) {
+                viewBoardP2[r][c] = HIT_MARK;
+                hiddenBoardP2[r][c] = HIT_MARK;
                 std::cout << "Hit!\n";
                 grantExtraTurn = true;
+
+                std::cout << "Press Enter to continue...";
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cin.get();
             }
             else {
-                viewBoardP2[selectedRow][selectedCol] = MISS_MARK;
-                hiddenBoardP2[selectedRow][selectedCol] = MISS_MARK;
+                viewBoardP2[r][c] = MISS_MARK;
+                hiddenBoardP2[r][c] = MISS_MARK;
                 std::cout << "Miss!\n";
-            }
 
+                std::cout << "Press Enter to continue...";
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cin.get();
+            }
         }
-        else { // Player 2
-
-            if(viewBoardP1[selectedRow][selectedCol] != WATER_CELL) {
+        else {
+            if(viewBoardP1[r][c] != WATER_CELL) {
                 std::cout << "Already shot there!\n";
                 stayOnTurn = true;
                 continue;
             }
 
-            if(hiddenBoardP1[selectedRow][selectedCol] != WATER_CELL) {
-                viewBoardP1[selectedRow][selectedCol] = HIT_MARK;
-                hiddenBoardP1[selectedRow][selectedCol] = HIT_MARK;
+            if(hiddenBoardP1[r][c] != WATER_CELL) {
+                viewBoardP1[r][c] = HIT_MARK;
+                hiddenBoardP1[r][c] = HIT_MARK;
                 std::cout << "Hit!\n";
                 grantExtraTurn = true;
+
+                std::cout << "Press Enter to continue...";
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cin.get();
             }
             else {
-                viewBoardP1[selectedRow][selectedCol] = MISS_MARK;
-                hiddenBoardP1[selectedRow][selectedCol] = MISS_MARK;
+                viewBoardP1[r][c] = MISS_MARK;
+                hiddenBoardP1[r][c] = MISS_MARK;
                 std::cout << "Miss!\n";
+
+                std::cout << "Press Enter to continue...";
+                std::cin.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+                std::cin.get();
             }
         }
 
         // -------- Win check --------
-        bool p1Alive = false, p2Alive = false;
+        bool p1Alive = false;
+        bool p2Alive = false;
 
         for(short i = 0; i < BOARD_SIZE; ++i) {
             for(short j = 0; j < BOARD_SIZE; ++j) {
